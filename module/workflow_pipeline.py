@@ -1,14 +1,37 @@
 # -*- coding: utf-8 -*-
-# last update: Sep.2 24
+# last update: Sep.5 24
 # author: Sean
 
 import torch
 import asyncio
 import inspect
+from rich.console import Console
+from melo.api import TTS
+
 from utils import gen_client
 
 from vad_iterator import VADIterator
 from lightning_whisper_mlx import LightningWhisperMLX
+
+console = Console()
+
+WHISPER_LANGUAGE_TO_MELO_LANGUAGE = {
+    "en": "EN_NEWEST",
+    "fr": "FR",
+    "es": "ES",
+    "zh": "ZH",
+    "ja": "JP",
+    "ko": "KR",
+}
+
+WHISPER_LANGUAGE_TO_MELO_SPEAKER = {
+    "en": "EN-Newest",
+    "fr": "FR",
+    "es": "ES",
+    "zh": "ZH",
+    "ja": "JP",
+    "ko": "KR",
+}
 
 # create pipeline class
 class ChatbotEventPipeline:
@@ -19,14 +42,18 @@ class ChatbotEventPipeline:
                 workflow={},
                 stt_model_name="distil-large-v3"
                 ):
+
         self.queue = asyncio.Queue()
         self.state = 'RUNNING'
         self.system_prompt = system_prompt
         self.business_workflow = workflow
         self.session_data = {}
         self.client, self.model = gen_client(service_name=service_name, if_async=True)
+        
+        self.device = "cpu"
 
         # VAD
+        console.print("[blue]ChatbotEventPipeline: initializing VAD...")
         self.vad_sample_rate = 16000
         self.vad_min_silence_ms = 1000
         self.vad_min_speech_ms = 1000
@@ -40,7 +67,22 @@ class ChatbotEventPipeline:
             speech_pad_ms=30,
         )
         # STT 
+        console.print("[blue]ChatbotEventPipeline: initializing STT...")
         self.stt_model = LightningWhisperMLX(model=stt_model_name, batch_size=6, quant=None)
+
+        # TTS
+        console.print("[blue]ChatbotEventPipeline: initializing TTS...")
+        self.tts_language = 'en'
+        self.tts_speaker = 'en'
+        self.tts_model = TTS(
+            language=WHISPER_LANGUAGE_TO_MELO_LANGUAGE[self.tts_language], device=self.device
+        )
+        self.tts_speaker_id = self.tts_model.hps.data.spk2id[
+            WHISPER_LANGUAGE_TO_MELO_SPEAKER[self.tts_speaker]
+        ]
+        self.blocksize = 512
+
+        console.print("[blue]ChatbotEventPipeline: initialization complete")
 
     def add(self, process_name, func):
         self.business_workflow[process_name] = func
@@ -56,30 +98,31 @@ class ChatbotEventPipeline:
 
     async def execute(self):
         while self.state:
-            nxt_func, args = await self.queue.get()
+            task, args = await self.queue.get()
             usr_id, data = args[0], args[1]
 
             # set the execute to stop
-            if nxt_func == 'STOP':
+            if task == 'STOP':
                 self.state = False
 
-            elif nxt_func == 'None':
+            elif task == 'None':
                 pass
 
-            elif nxt_func in self.business_workflow:
-                func = self.business_workflow[nxt_func]
+            elif task in self.business_workflow:
+                func = self.business_workflow[task]
 
                 # check if the function is async generator function
                 if inspect.isasyncgenfunction(func):
-                    async for _nxt, _args in func(self, usr_id, data):
+                    async for _nxt_task, _args in func(self, usr_id, data):
                         _usr_id, _data = _args[0], _args[1]
-                        # print("workflow_pipeline agf", _nxt, _usr_id, _data)
-                        await self.put_data((_nxt, (_usr_id, _data)))
+                        # print("workflow_pipeline agf", _nxt_task, _usr_id, _data)
+                        self.put_data((_nxt_task, (_usr_id, _data)))
                 else:
-                    _nxt, _args = await func(self, usr_id, data)
+                    _nxt_task, _args = await func(self, usr_id, data)
                     _usr_id, _data = _args[0], _args[1]
-                    # print("workflow_pipeline", _nxt, _usr_id, _data)
-                    await self.put_data((_nxt, (_usr_id, _data)))
+                    # print("workflow_pipeline", _nxt_task, _usr_id, _data)
+                    # print("queue: ", self.queue)
+                    self.put_data((_nxt_task, (_usr_id, _data)))
 
             self.queue.task_done()
 

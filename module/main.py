@@ -1,17 +1,21 @@
 # -*- coding: utf-8 -*-
-# last update: Sep.2 24
+# last update: Sep.5 24
 # author: Sean
 
 import torch
 import asyncio
 import numpy as np
 import sounddevice as sd
+import warnings
+warnings.filterwarnings("ignore")
 from aiohttp import web
+from rich.console import Console
 
 from workflow_pipeline import ChatbotEventPipeline
 from task_schedule import business_workflow
 from utils import int2float
 
+console = Console()
 # init args for audio recording
 task_id = "sean_mbp"
 
@@ -41,22 +45,22 @@ def func_vad(pipeline,
     vad_output = pipeline.vad_iterator(torch.from_numpy(audio_float32))
 
     if vad_output is not None and len(vad_output) > 0:
-        print("VAD: end of speech detected")
+        console.print("[blue]VAD: end of speech detected")
 
         array = torch.cat(vad_output).cpu().numpy()
         duration_ms = len(array) / pipeline.vad_sample_rate * 1000
 
         if duration_ms < pipeline.vad_min_speech_ms or duration_ms > pipeline.vad_max_speech_ms:
-            print(f"VAD: audio input of duration: {len(array) / pipeline.vad_sample_rate}s, skipping")
+            console.print(f"[blue]VAD: audio input of duration: {len(array) / pipeline.vad_sample_rate}s, skipping")
         else:
-            print("VAD: put data to pipeline")
+            console.print("[blue]VAD: put data to pipeline")
             pipeline.put_data(('stt', (user_id, array)))
 
 async def func_handle_audio(pipeline):
 
     def callback(indata, frames, time, status):
         if status:
-            print("Audio indata status: ", status)
+            console.print("[blue]Audio indata status: ", status)
         func_vad(pipeline, task_id, indata.copy())
 
     with sd.InputStream(
@@ -66,7 +70,7 @@ async def func_handle_audio(pipeline):
         callback=callback,
         blocksize=512):
 
-        print("Start audio recording...")
+        console.print(f"[blue]Start audio recording...")
         while True:
             await asyncio.sleep(0.01)
 

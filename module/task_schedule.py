@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
-# last update: Sep.2 24
+# last update: Sep.5 24
 # author: Sean
 
-from func_tools import func_stt, func_chatbot, func_output
+from func_tools import func_stt, func_chatbot, func_tts, func_audio_output
 
 business_workflow = {
     'stt': func_stt,
     'chatbot': func_chatbot,
-    'output': func_output,
+    'tts': func_tts,
+    'output': func_audio_output,
 }
