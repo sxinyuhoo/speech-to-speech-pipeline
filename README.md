@@ -1,4 +1,4 @@
-# list-speech2speech-pipeline
+# Lite Speech2Speech Pipeline
 
 A tool that allows users to quickly customize LLM chatbot workflow pipelines, like Text-to-Text, Text-to-Speech or Speech-to-Speech
 
@@ -13,7 +13,7 @@ A tool that allows users to quickly customize LLM chatbot workflow pipelines, li
 ![pipeline structure](./docs/img/pipeline%20function%20implementation.png)
 
 通过三个模块实现整个工作流程的管理，分别是task_schedule、tools、workflow_pipeline。
-task_schedule负责任务的调度，tools负责任务的管理，workflow_pipeline负责任务管道的流转。  
+task_schedule负责任务的调度，tools负责任务的管理，workflow_pipeline负责任务管道的流转。
 
 ## Instance
 
@@ -22,5 +22,3 @@ task_schedule负责任务的调度，tools负责任务的管理，workflow_pipel
 ![pipeline instance](./docs/img/pipeline%20instance.png)
 
 ## Usage
-
-

@@ -1,4 +1,4 @@
-# list-speech2speech-pipeline
+# Lite Speech2Speech Pipeline
 
 A tool that allows users to quickly customize LLM chatbot workflow pipelines, like Text-to-Text, Text-to-Speech or Speech-to-Speech
 
@@ -11,8 +11,5 @@ A tool that allows users to quickly customize LLM chatbot workflow pipelines, li
 ## Structure
 
 ![pipeline structure](./docs/img/pipeline%20function%20implementation.png)
-
-
-
 
 该实现思路与huggingface/speech to speech项目类似（那项目使用多线程和多队列实现），但相对实现了一个pipeline，通过
