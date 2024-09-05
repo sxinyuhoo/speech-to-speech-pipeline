@@ -5,7 +5,6 @@
 import torch
 import librosa
 import numpy as np
-import sounddevice as sd
 from rich.console import Console
 
 #############################
@@ -62,7 +61,7 @@ async def async_chat(pipeline, session_id, message, system_prompt, client, model
 
 async def func_stt(pipeline, user_id, audio_data):
 
-    console.print("[blue]inferring whisper...")
+    # console.print("[blue]inferring whisper...")
     inferred_text = pipeline.stt_model.transcribe(audio_data, language='zh')["text"].strip()
     torch.mps.empty_cache()
 
@@ -70,7 +69,8 @@ async def func_stt(pipeline, user_id, audio_data):
     return ('chatbot', (user_id, inferred_text))
 
 async def func_chatbot(pipeline, user_id, msg):
-    console.print("[blue]chatbot processing...")
+    # console.print("[blue]chatbot processing...")
+    console.print(f"[yellow]USER {user_id}: {msg}")
     
     client, model, system_prompt = pipeline.client, pipeline.model, pipeline.system_prompt
 
@@ -80,12 +80,11 @@ async def func_chatbot(pipeline, user_id, msg):
     async for _output in async_chat(pipeline=pipeline, session_id=user_id, message=msg, system_prompt=system_prompt, client=client, model=model):
         curr_output += _output
         if curr_output.endswith((".", "?", "!")):
-            console.print(f"[green] CHATBOT : {curr_output}")
+            console.print(f"[green]CHATBOT : {curr_output}")
             yield ('tts', (user_id, curr_output))
             curr_output = ""
 
 async def func_tts(pipeline, user_id, llm_sentence):
-    console.print("[blue]tts processing...", llm_sentence)
 
     if pipeline.device == "mps":
         import time
@@ -97,7 +96,7 @@ async def func_tts(pipeline, user_id, llm_sentence):
         )  # Removing this line makes it fail more often. I'm looking into it.
 
     try:
-        console.print("[blue]tts in the try...")
+        # console.print("[blue]tts in the try...")
         audio_chunk = pipeline.tts_model.tts_to_file(
             llm_sentence, pipeline.tts_speaker_id, quiet=True
         )
@@ -112,9 +111,8 @@ async def func_tts(pipeline, user_id, llm_sentence):
     audio_chunk = librosa.resample(audio_chunk, orig_sr=44100, target_sr=16000)
     audio_chunk = (audio_chunk * 32768).astype(np.int16)
 
-    console.print("[blue]tts audio chunk yield processing...")
     for i in range(0, len(audio_chunk), pipeline.blocksize):
-        yield ('output', 
+        yield ('audio_output', 
             (user_id, 
             np.pad(
             audio_chunk[i : i + pipeline.blocksize],
@@ -123,8 +121,7 @@ async def func_tts(pipeline, user_id, llm_sentence):
 
 async def func_audio_output(pipeline, user_id, audio_chunk):
     
-    # sd.play(audio_chunk, samplerate=16000)
-    # sd.wait()
+    pipeline.audio_output_queue.put_nowait(audio_chunk)
 
     return ('None', (None, None))
 

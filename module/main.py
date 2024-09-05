@@ -6,8 +6,7 @@ import torch
 import asyncio
 import numpy as np
 import sounddevice as sd
-import warnings
-warnings.filterwarnings("ignore")
+
 from aiohttp import web
 from rich.console import Console
 
@@ -56,11 +55,10 @@ def func_vad(pipeline,
             console.print("[blue]VAD: put data to pipeline")
             pipeline.put_data(('stt', (user_id, array)))
 
-async def func_handle_audio(pipeline):
+async def func_handle_audio_input(pipeline):
 
     def callback(indata, frames, time, status):
-        if status:
-            console.print("[blue]Audio indata status: ", status)
+
         func_vad(pipeline, task_id, indata.copy())
 
     with sd.InputStream(
@@ -71,6 +69,27 @@ async def func_handle_audio(pipeline):
         blocksize=512):
 
         console.print(f"[blue]Start audio recording...")
+        while True:
+            await asyncio.sleep(0.01)
+
+async def func_handle_audio_output(pipeline):
+
+    def callback(outdata, frames, time, status):
+        if not pipeline.audio_output_queue.empty():
+            audio_data = pipeline.audio_output_queue.get_nowait()
+            outdata[:] = audio_data.reshape(outdata.shape)
+        else:
+            outdata[:] = 0 * outdata
+        
+
+    with sd.OutputStream(
+        samplerate=16000,
+        dtype='int16',
+        channels=1,
+        callback=callback,
+        blocksize=512):
+
+        console.print(f"[blue]Start audio output...")
         while True:
             await asyncio.sleep(0.01)
 
@@ -94,12 +113,16 @@ async def main_by_request(pipeline):
 async def main_by_audio(pipeline):
 
     # audio recording
-    audio_task = asyncio.create_task(func_handle_audio(pipeline))
+    audio_input_task = asyncio.create_task(func_handle_audio_input(pipeline))
 
     # create pipeline task
     pipeline_task = asyncio.create_task(pipeline.execute())
 
-    await audio_task
+    # create audio output task
+    audio_output_task = asyncio.create_task(func_handle_audio_output(pipeline))
+
+    await audio_input_task
+    await audio_output_task
 
     # wait for all data to be processed
     await pipeline.queue.join()
@@ -111,12 +134,15 @@ if __name__ == '__main__':
 
 
     system_prompt = """
-        你是一个聊天机器人，你的任务是与用户进行自然对话。请尽量让对话自然流畅，避免出现不连贯的情况。你可以随时结束对话，但请不要在中途中断对话。
+        You are a chatbot, your task is to have a natural conversation with the user. Please try to make the conversation flow naturally and avoid any incoherence. You can end the conversation at any time, but please do not interrupt the conversation halfway.
     """
 
     pipeline = ChatbotEventPipeline(service_name="deepseek",
                                 system_prompt=system_prompt,
                                 workflow=business_workflow)
-
-    # asyncio.run(main_by_request(pipeline=pipeline))
+    
+    # instance 1: speech-to-speech
     asyncio.run(main_by_audio(pipeline=pipeline))
+
+    # instance 2: text-to-text
+    # asyncio.run(main_by_request(pipeline=pipeline))

@@ -8,5 +8,5 @@ business_workflow = {
     'stt': func_stt,
     'chatbot': func_chatbot,
     'tts': func_tts,
-    'output': func_audio_output,
+    'audio_output': func_audio_output,
 }

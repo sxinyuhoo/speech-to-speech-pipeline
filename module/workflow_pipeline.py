@@ -43,7 +43,8 @@ class ChatbotEventPipeline:
                 stt_model_name="distil-large-v3"
                 ):
 
-        self.queue = asyncio.Queue()
+        self.queue = asyncio.Queue() # pipeline queue
+        self.audio_output_queue = asyncio.Queue() # audio output queue
         self.state = 'RUNNING'
         self.system_prompt = system_prompt
         self.business_workflow = workflow
