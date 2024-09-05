@@ -69,8 +69,6 @@ async def func_stt(pipeline, user_id, audio_data):
     return ('chatbot', (user_id, inferred_text))
 
 async def func_chatbot(pipeline, user_id, msg):
-    # console.print("[blue]chatbot processing...")
-    console.print(f"[yellow]USER {user_id}: {msg}")
     
     client, model, system_prompt = pipeline.client, pipeline.model, pipeline.system_prompt
 

@@ -55,41 +55,24 @@ def func_vad(pipeline,
             console.print("[blue]VAD: put data to pipeline")
             pipeline.put_data(('stt', (user_id, array)))
 
-async def func_handle_audio_input(pipeline):
+async def func_handle_audio(pipeline):
 
-    def callback(indata, frames, time, status):
-
-        func_vad(pipeline, task_id, indata.copy())
-
-    with sd.InputStream(
-        samplerate=16000,
-        dtype='int16',
-        channels=1,
-        callback=callback,
-        blocksize=512):
-
-        console.print(f"[blue]Start audio recording...")
-        while True:
-            await asyncio.sleep(0.01)
-
-async def func_handle_audio_output(pipeline):
-
-    def callback(outdata, frames, time, status):
-        if not pipeline.audio_output_queue.empty():
+    def callback(indata, outdata, frames, time, status):
+        if pipeline.audio_output_queue.empty():
+            func_vad(pipeline, task_id, indata.copy())
+            outdata[:] = 0 * outdata
+        else:
             audio_data = pipeline.audio_output_queue.get_nowait()
             outdata[:] = audio_data.reshape(outdata.shape)
-        else:
-            outdata[:] = 0 * outdata
-        
 
-    with sd.OutputStream(
+    with sd.Stream(
         samplerate=16000,
         dtype='int16',
         channels=1,
         callback=callback,
         blocksize=512):
 
-        console.print(f"[blue]Start audio output...")
+        console.print(f"[blue]Start audio detect...")
         while True:
             await asyncio.sleep(0.01)
 
@@ -112,17 +95,13 @@ async def main_by_request(pipeline):
 
 async def main_by_audio(pipeline):
 
-    # audio recording
-    audio_input_task = asyncio.create_task(func_handle_audio_input(pipeline))
+    # audio task
+    audio_task = asyncio.create_task(func_handle_audio(pipeline))
 
     # create pipeline task
     pipeline_task = asyncio.create_task(pipeline.execute())
 
-    # create audio output task
-    audio_output_task = asyncio.create_task(func_handle_audio_output(pipeline))
-
-    await audio_input_task
-    await audio_output_task
+    await audio_task
 
     # wait for all data to be processed
     await pipeline.queue.join()
