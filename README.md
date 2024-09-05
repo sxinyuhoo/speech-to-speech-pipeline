@@ -2,23 +2,94 @@
 
 A tool that allows users to quickly customize LLM chatbot workflow pipelines, like Text-to-Text, Text-to-Speech or Speech-to-Speech
 
-## Design
+## Overview
+
+This project is an asynchronous LLM chatbot task workflow management tool, where each function is an independent module, and the data input and output are circulated in the data flow pipeline.
 
 ![pipeline structure](./docs/img/pipeline%20structure.png)
 
-本项目是基于异步实现的LLM chatbot任务工作流管理工具，每个function都是一个独立的模块，通过task_schedule决定模块各自之间的衔接关系，数据的输入输出在数据流管道中进行流转。
-
 ## Module
+
+The entire workflow is executed through three modules, task_schedule, func_tools, workflow_pipeline, and main is the entry point of the program.
+
+- task_schedule: responsible for task scheduling  
+- func_tools: responsible for the specific implementation of tasks
+- workflow_pipeline: responsible for the operation of the task pipeline and environment initialization
+- main: program entry, defines the input and output of workflow_pipeline (API or Audio)
 
 ![pipeline structure](./docs/img/pipeline%20function%20implementation.png)
 
-通过三个模块实现整个工作流程的管理，分别是task_schedule、tools、workflow_pipeline。
-task_schedule负责任务的调度，tools负责任务的管理，workflow_pipeline负责任务管道的流转。
-
 ## Instance
 
-本项目实现了两个实例，分别是Text-to-Text和Speech-to-Speech。
+This project implements two instances, Text-to-Text and Speech-to-Speech.
+> VAD, TTS, and STT refer to the implementation code in HuggingFace's [speech-to-speech](https://github.com/huggingface/speech-to-speech.git).
 
 ![pipeline instance](./docs/img/pipeline%20instance.png)
 
 ## Usage
+
+```shell
+# clone the repo
+git clone https://github.com/sxinyuhoo/lite-speech2speech-pipeline.git
+cd lite-speech2speech-pipeline
+
+# install the dependencies
+pip install -r requirements.txt
+
+# run the main.py
+python module/main.py
+```
+
+## Citation
+
+- VAD
+
+```bibtex
+@misc{Silero VAD,
+  author = {Silero Team},
+  title = {Silero VAD: pre-trained enterprise-grade Voice Activity Detector (VAD), Number Detector and Language Classifier},
+  year = {2021},
+  publisher = {GitHub},
+  journal = {GitHub repository},
+  howpublished = {\url{https://github.com/snakers4/silero-vad}},
+  commit = {insert_some_commit_here},
+  email = {hello@silero.ai}
+}
+```
+
+- STT
+
+```bibtex
+@misc{gandhi2023distilwhisper,
+      title={Distil-Whisper: Robust Knowledge Distillation via Large-Scale Pseudo Labelling},
+      author={Sanchit Gandhi and Patrick von Platen and Alexander M. Rush},
+      year={2023},
+      eprint={2311.00430},
+      archivePrefix={arXiv},
+      primaryClass={cs.CL}
+}
+```
+
+- TTS
+
+```bibtex
+@software{zhao2024melo,
+  author={Zhao, Wenliang and Yu, Xumin and Qin, Zengyi},
+  title = {MeloTTS: High-quality Multi-lingual Multi-accent Text-to-Speech},
+  url = {https://github.com/myshell-ai/MeloTTS},
+  year = {2023}
+}
+```
+
+- speech-to-speech
+
+```bibtex
+@software{speech-to-speech,
+  author = {Hugging Face},
+  title = {Speech To Speech: an effort for an open-sourced and modular GPT4-o},
+  year = {2024},
+  publisher = {GitHub},
+  journal = {GitHub repository},
+  url = {https://github.com/huggingface/speech-to-speech.git}
+}
+```
