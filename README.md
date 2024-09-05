@@ -21,8 +21,14 @@ The entire workflow is executed through three modules, task_schedule, func_tools
 
 ## Instance
 
-This project implements two instances, Text-to-Text and Speech-to-Speech.
+This project implements two instances, Speech-to-Speech and Text-to-Text.
 > VAD, TTS, and STT refer to the implementation code in HuggingFace's [speech-to-speech](https://github.com/huggingface/speech-to-speech.git).
+
+- VAD: Silero VAD
+- STT: Distil-Whisper
+- LLM: DeepSeek-chatbot
+- TTS: MeloTTS
+- Audio input/output: sounddevice
 
 ![pipeline instance](./docs/img/pipeline%20instance.png)
 
@@ -36,9 +42,18 @@ cd lite-speech2speech-pipeline
 # install the dependencies
 pip install -r requirements.txt
 
+# configure the LLM API-KEY in the `config.ini` file
+
 # run the main.py
 python module/main.py
+
 ```
+
+Default is Speech-to-Speech mode, if you want to switch to Text-to-Text mode, you can:
+
+1. modify the `main.py` to change `asyncio.run(main_by_audio(pipeline=pipeline))` to `asyncio.run(main_by_request(pipeline=pipeline))`
+2. annotate `tts`, `stt`, `audio_output` in task_schedule.py
+3. execute `python module/main.py`, and then send a request through `curl -X POST http://localhost:8080/add_task -H "Content-Type: application/json" -d '{"task_type": "chatbot", "task_data": "hello", "task_id": "sean"}'`.
 
 ## Citation
 
