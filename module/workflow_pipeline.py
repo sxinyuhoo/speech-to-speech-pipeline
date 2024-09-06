@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# last update: Sep.5 24
+# last update: Sep.6 24
 # author: Sean
 
 import torch
@@ -97,6 +97,16 @@ class ChatbotEventPipeline:
     def put_data(self, data):
         self.queue.put_nowait(data)
 
+    async def handle_async_gen_func(self, func, usr_id, data):
+        async for _nxt_task, _args in func(self, usr_id, data):
+            _usr_id, _data = _args[0], _args[1]
+            self.put_data((_nxt_task, (_usr_id, _data)))
+
+    async def handle_async_func(self, func, usr_id, data):
+        _nxt_task, _args = await func(self, usr_id, data)
+        _usr_id, _data = _args[0], _args[1]
+        self.put_data((_nxt_task, (_usr_id, _data)))
+
     async def execute(self):
         while self.state:
             task, args = await self.queue.get()
@@ -114,16 +124,9 @@ class ChatbotEventPipeline:
 
                 # check if the function is async generator function
                 if inspect.isasyncgenfunction(func):
-                    async for _nxt_task, _args in func(self, usr_id, data):
-                        _usr_id, _data = _args[0], _args[1]
-                        # print("workflow_pipeline agf", _nxt_task, _usr_id, _data)
-                        self.put_data((_nxt_task, (_usr_id, _data)))
+                    asyncio.create_task(self.handle_async_gen_func(func, usr_id, data))
                 else:
-                    _nxt_task, _args = await func(self, usr_id, data)
-                    _usr_id, _data = _args[0], _args[1]
-                    # print("workflow_pipeline", _nxt_task, _usr_id, _data)
-                    # print("queue: ", self.queue)
-                    self.put_data((_nxt_task, (_usr_id, _data)))
+                    asyncio.create_task(self.handle_async_func(func, usr_id, data))
 
             self.queue.task_done()
 
