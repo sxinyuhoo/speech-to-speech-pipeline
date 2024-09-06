@@ -62,7 +62,7 @@ class ChatbotEventPipeline:
         self.vad_model, _ = torch.hub.load("snakers4/silero-vad", "silero_vad")
         self.vad_iterator = VADIterator(
             self.vad_model,
-            threshold=0.3,
+            threshold=0.5,
             sampling_rate=self.vad_sample_rate,
             min_silence_duration_ms=self.vad_min_silence_ms,
             speech_pad_ms=30,
