@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# last update: Sep.5 24
+# last update: Sep.6 24
 # author: Sean
 
 import torch
@@ -65,11 +65,12 @@ async def func_stt(pipeline, user_id, audio_data):
     inferred_text = pipeline.stt_model.transcribe(audio_data, language='zh')["text"].strip()
     torch.mps.empty_cache()
 
-    console.print(f"[yellow]USER {user_id}: {inferred_text}")
     return ('chatbot', (user_id, inferred_text))
 
 async def func_chatbot(pipeline, user_id, msg):
     
+    console.print(f"[yellow]USER {user_id}: {msg}")
+
     client, model, system_prompt = pipeline.client, pipeline.model, pipeline.system_prompt
 
     curr_output = ""
@@ -81,6 +82,10 @@ async def func_chatbot(pipeline, user_id, msg):
             console.print(f"[green]CHATBOT : {curr_output}")
             yield ('tts', (user_id, curr_output))
             curr_output = ""
+        
+    # ensure any remaining text is yielded
+    if curr_output:
+        yield ('tts', (user_id, curr_output))
 
 async def func_tts(pipeline, user_id, llm_sentence):
 
@@ -94,16 +99,15 @@ async def func_tts(pipeline, user_id, llm_sentence):
         )  # Removing this line makes it fail more often. I'm looking into it.
 
     try:
-        # console.print("[blue]tts in the try...")
         audio_chunk = pipeline.tts_model.tts_to_file(
             llm_sentence, pipeline.tts_speaker_id, quiet=True
         )
-        # console.print("[blue]tts tried the res: ", audio_chunk)
     except Exception as e:
-        print("[blue]tts in the except: ", e)
+        console.print(f"[red]tts in the except: ", e)
         audio_chunk = np.array([])
+
     if len(audio_chunk) == 0:
-        console.print("[blue]tts no audio chunk...")
+        console.print(f"[red]tts no audio chunk...")
         yield ('None', (None, None))
     
     audio_chunk = librosa.resample(audio_chunk, orig_sr=44100, target_sr=16000)
