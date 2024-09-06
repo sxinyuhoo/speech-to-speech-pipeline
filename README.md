@@ -12,7 +12,7 @@ This project is an asynchronous LLM chatbot task workflow management tool, where
 
 The entire workflow is executed through three modules, task_schedule, func_tools, workflow_pipeline, and main is the entry point of the program.
 
-- task_schedule: responsible for task scheduling  
+- task_schedule: responsible for task scheduling
 - func_tools: responsible for the specific implementation of tasks
 - workflow_pipeline: responsible for the operation of the task pipeline and environment initialization
 - main: program entry, defines the input and output of workflow_pipeline (API or Audio)
@@ -21,7 +21,8 @@ The entire workflow is executed through three modules, task_schedule, func_tools
 
 ## Instance
 
-This project implements two instances, Speech-to-Speech and Text-to-Text.
+This project implements two instances, Speech-to-Speech and Text-to-Speech.
+
 > VAD, TTS, and STT refer to the implementation code in HuggingFace's [speech-to-speech](https://github.com/huggingface/speech-to-speech.git).
 
 - VAD: Silero VAD
@@ -49,10 +50,10 @@ python module/main.py
 
 ```
 
-Default is Speech-to-Speech mode, if you want to switch to Text-to-Text mode, you can:
+Default is Speech-to-Speech mode, if you want to switch to Text-to-Speech mode, you can:
 
 1. modify the `main.py` to change `asyncio.run(main_by_audio(pipeline=pipeline))` to `asyncio.run(main_by_request(pipeline=pipeline))`
-2. annotate `tts`, `stt`, `audio_output` in task_schedule.py
+2. annotate `stt` in task_schedule.py
 3. execute `python module/main.py`, and then send a request through `curl -X POST http://localhost:8080/add_task -H "Content-Type: application/json" -d '{"task_type": "chatbot", "task_data": "hello", "task_id": "sean"}'`.
 
 ## Citation
