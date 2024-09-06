@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# last update: Sep.5 24
+# last update: Sep.6 24
 # author: Sean
 
 import torch
@@ -16,7 +16,7 @@ from utils import int2float
 
 console = Console()
 # init args for audio recording
-task_id = "sean_mbp"
+task_id = "default"
 
 
 async def func_handle_request(request):
@@ -76,9 +76,31 @@ async def func_handle_audio(pipeline):
         while True:
             await asyncio.sleep(0.01)
 
+async def func_handle_audio_output(pipeline):
+
+    def callback(outdata, frames, time, status):
+        try:
+            audio_data = pipeline.audio_output_queue.get_nowait()
+            outdata[:] = audio_data.reshape(outdata.shape)
+        except Exception as e:
+            outdata[:] = 0 * outdata
+
+    with sd.OutputStream(
+        samplerate=16000,
+        dtype='int16',
+        channels=1,
+        callback=callback,
+        blocksize=512):
+
+        while True:
+            await asyncio.sleep(0.01)
+
 async def main_by_request(pipeline):    
     # create pipeline task
     pipeline_task = asyncio.create_task(pipeline.execute())
+
+    # audio task
+    audio_task = asyncio.create_task(func_handle_audio_output(pipeline))
 
     # start web server
     app = await init_app()
@@ -92,6 +114,7 @@ async def main_by_request(pipeline):
 
     # wait for pipeline task to finish
     await pipeline_task
+    await audio_task
 
 async def main_by_audio(pipeline):
 
@@ -113,7 +136,9 @@ if __name__ == '__main__':
 
 
     system_prompt = """
-        You are a chatbot, your task is to have a natural conversation with the user. Please try to make the conversation flow naturally and avoid any incoherence. You can end the conversation at any time, but please do not interrupt the conversation halfway.
+        You are a chatbot, your task is to have a natural conversation with the user in a short response. 
+        Please try to make the conversation flow naturally and avoid any incoherence. 
+        You can end the conversation at any time, but please do not interrupt the conversation halfway.
     """
 
     pipeline = ChatbotEventPipeline(service_name="deepseek",
@@ -123,5 +148,5 @@ if __name__ == '__main__':
     # instance 1: speech-to-speech
     asyncio.run(main_by_audio(pipeline=pipeline))
 
-    # instance 2: text-to-text
+    # instance 2: text-to-speech
     # asyncio.run(main_by_request(pipeline=pipeline))
