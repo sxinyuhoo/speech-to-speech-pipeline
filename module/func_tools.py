@@ -78,7 +78,7 @@ async def func_chatbot(pipeline, user_id, msg):
     # output_msg = await async_chat(pipeline=pipeline, session_id=user_id, message=msg, system_prompt=system_prompt, client=client, model=model)
     async for _output in async_chat(pipeline=pipeline, session_id=user_id, message=msg, system_prompt=system_prompt, client=client, model=model):
         curr_output += _output
-        if curr_output.endswith((".", "?", "!")):
+        if curr_output.endswith((".", "?", "!", "。", "？", "！")):
             console.print(f"[green]CHATBOT : {curr_output}")
             yield ('tts', (user_id, curr_output))
             curr_output = ""
