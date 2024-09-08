@@ -46,15 +46,15 @@ pip install -r requirements.txt
 # configure the LLM API-KEY in the `config.ini` file
 
 # run the main.py
-python module/main.py
+python text2speech/main.py 
+# or 
+python speech2speech/main.py
 
 ```
 
-Default is Speech-to-Speech mode, if you want to switch to Text-to-Speech mode, you can:
+While using text2speech, you can send a request to chatbot like this:
 
-1. modify the `main.py` to change `asyncio.run(main_by_audio(pipeline=pipeline))` to `asyncio.run(main_by_request(pipeline=pipeline))`
-2. annotate `stt` in task_schedule.py
-3. execute `python module/main.py`, and then send a request through `curl -X POST http://localhost:8080/add_task -H "Content-Type: application/json" -d '{"task_type": "chatbot", "task_data": "hello", "task_id": "sean"}'`.
+execute `python text2speech/main.py`, and then send a request through `curl -X POST http://localhost:8080/add_task -H "Content-Type: application/json" -d '{"task_type": "chatbot", "task_data": "hello", "task_id": "sean"}'`.
 
 ## Citation
 
