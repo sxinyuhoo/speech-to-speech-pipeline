@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# last update: Sep.8 24
+# last update: Sep.9 24
 # author: Sean
 
 import torch
@@ -56,25 +56,6 @@ async def func_handle_audio(pipeline):
         blocksize=512):
 
         console.print(f"[blue]Start audio detect...")
-        while True:
-            await asyncio.sleep(0.01)
-
-async def func_handle_audio_output(pipeline):
-
-    def callback(outdata, frames, time, status):
-        try:
-            audio_data = pipeline.audio_output_queue.get_nowait()
-            outdata[:] = audio_data.reshape(outdata.shape)
-        except Exception as e:
-            outdata[:] = 0 * outdata
-
-    with sd.OutputStream(
-        samplerate=16000,
-        dtype='int16',
-        channels=1,
-        callback=callback,
-        blocksize=512):
-
         while True:
             await asyncio.sleep(0.01)
 

@@ -25,7 +25,7 @@ This project implements two instances, Speech-to-Speech and Text-to-Speech.
 
 > VAD, TTS, and STT refer to the implementation code in HuggingFace's [speech-to-speech](https://github.com/huggingface/speech-to-speech.git).
 
-- VAD: Silero VAD (adding additionally ability to interrupt audio in real time)
+- VAD: Silero VAD
 - STT: Distil-Whisper
 - LLM: DeepSeek-chatbot
 - TTS: MeloTTS
