@@ -10,10 +10,10 @@ This project is an asynchronous LLM chatbot task workflow management tool, where
 
 ## Module
 
-The entire workflow is executed through three modules, task_schedule, func_tools, workflow_pipeline, and main is the entry point of the program.
+The entire workflow is executed through just three modules, task_schedule, func_tools, workflow_pipeline, and main is the entry point of the program.
 
-- task_schedule: responsible for task scheduling
 - func_tools: responsible for the specific implementation of tasks
+- task_schedule: responsible for task(func_tools) scheduling
 - workflow_pipeline: responsible for the operation of the task pipeline and environment initialization
 - main: program entry, defines the input and output of workflow_pipeline (API or Audio)
 
